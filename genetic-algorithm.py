@@ -1,76 +1,94 @@
 import random
 import math
 
-# Fungsi yang akan diminimalkan
-def fitness_function(x1, x2):
+# Fungsi target
+def fungsi_target(x1, x2):
     return -(
-        math.sin(x1) * math.cos(x2) * math.tan(x1 + x2) +
-        (3 / 4) * math.exp(1 - math.sqrt(x1**2))
+        math.sin(x1) * math.cos(x2) * math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1**2))
     )
 
 # Parameter GA
-POP_SIZE = 20
-CHROM_LENGTH = 16  # Panjang kromosom (8 bit per variabel)
-GEN_MAX = 100
-P_C = 0.8
-P_M = 0.1
-DOMAIN = (-10, 10)
+populasi_size = 20
+batas_x1 = [-10, 10]
+batas_x2 = [-10, 10]
+jumlah_generasi = 100
+mutasi_rate = 0.1
 
-# Fungsi utilitas
-def decode_chromosome(chrom):
-    half = len(chrom) // 2
-    x1_bin = chrom[:half]
-    x2_bin = chrom[half:]
-    x1 = DOMAIN[0] + int("".join(map(str, x1_bin)), 2) * (DOMAIN[1] - DOMAIN[0]) / (2**half - 1)
-    x2 = DOMAIN[0] + int("".join(map(str, x2_bin)), 2) * (DOMAIN[1] - DOMAIN[0]) / (2**half - 1)
-    return x1, x2
+def inisialisasi_populasi():
+    return [
+        {
+            "x1": random.uniform(batas_x1[0], batas_x1[1]),
+            "x2": random.uniform(batas_x2[0], batas_x2[1]),
+        }
+        for _ in range(populasi_size)
+    ]
 
-def create_population():
-    return [[random.randint(0, 1) for _ in range(CHROM_LENGTH)] for _ in range(POP_SIZE)]
+def hitung_fitness(kromosom):
+    x1, x2 = kromosom["x1"], kromosom["x2"]
+    return -fungsi_target(x1, x2)  # Maksimasi fitness -> minimasi fungsi target
 
-def calculate_fitness(pop):
-    fitness = []
-    for chrom in pop:
-        x1, x2 = decode_chromosome(chrom)
-        fitness.append(fitness_function(x1, x2))
-    return fitness
-
-def select_parents(pop, fitness):
+def seleksi_orangtua(populasi, fitness):
     total_fitness = sum(fitness)
-    selection_probs = [f / total_fitness for f in fitness]
-    return random.choices(pop, weights=selection_probs, k=2)
+    probabilitas = [f / total_fitness for f in fitness]
+    terpilih = random.choices(populasi, weights=probabilitas, k=2)
+    return terpilih
 
-def crossover(parent1, parent2):
-    if random.random() < P_C:
-        point = random.randint(1, CHROM_LENGTH - 1)
-        return parent1[:point] + parent2[point:], parent2[:point] + parent1[point:]
-    return parent1, parent2
+def crossover(ortu1, ortu2):
+    alpha = random.random()
+    anak1 = {
+        "x1": alpha * ortu1["x1"] + (1 - alpha) * ortu2["x1"],
+        "x2": alpha * ortu1["x2"] + (1 - alpha) * ortu2["x2"],
+    }
+    anak2 = {
+        "x1": alpha * ortu2["x1"] + (1 - alpha) * ortu1["x1"],
+        "x2": alpha * ortu2["x2"] + (1 - alpha) * ortu1["x2"],
+    }
+    return anak1, anak2
 
-def mutate(chrom):
-    return [bit if random.random() > P_M else 1 - bit for bit in chrom]
+def mutasi(kromosom):
+    if random.random() < mutasi_rate:
+        kromosom["x1"] = random.uniform(batas_x1[0], batas_x1[1])
+    if random.random() < mutasi_rate:
+        kromosom["x2"] = random.uniform(batas_x2[0], batas_x2[1])
+    return kromosom
 
-def replace_population(pop, fitness, new_pop):
-    combined = list(zip(pop, fitness)) + list(zip(new_pop, calculate_fitness(new_pop)))
-    combined.sort(key=lambda x: x[1])  # Sort by fitness (ascending)
-    return [chrom for chrom, _ in combined[:POP_SIZE]]
+def generasi_baru(populasi):
+    fitness = [hitung_fitness(kromosom) for kromosom in populasi]
+    populasi_baru = []
+    while len(populasi_baru) < populasi_size:
+        ortu1, ortu2 = seleksi_orangtua(populasi, fitness)
+        anak1, anak2 = crossover(ortu1, ortu2)
+        populasi_baru.append(mutasi(anak1))
+        if len(populasi_baru) < populasi_size:
+            populasi_baru.append(mutasi(anak2))
+    return populasi_baru
 
-# Main GA loop
-population = create_population()
-for gen in range(GEN_MAX):
-    fitness = calculate_fitness(population)
-    new_population = []
-    while len(new_population) < POP_SIZE:
-        parent1, parent2 = select_parents(population, fitness)
-        offspring1, offspring2 = crossover(parent1, parent2)
-        new_population.append(mutate(offspring1))
-        if len(new_population) < POP_SIZE:
-            new_population.append(mutate(offspring2))
-    population = replace_population(population, fitness, new_population)
+def ga_minimization():
+    populasi = inisialisasi_populasi()
+    generasi_terbaik = None
+    fitness_terbaik = float('-inf')
 
-# Output hasil terbaik
-final_fitness = calculate_fitness(population)
-best_chromosome = population[final_fitness.index(max(final_fitness))]
-best_x1, best_x2 = decode_chromosome(best_chromosome)
-print("Kromosom terbaik:", best_chromosome)
-print("Nilai x1 dan x2:", best_x1, best_x2)
-print("Nilai minimum fungsi:", fitness_function(best_x1, best_x2))
+    for generasi in range(jumlah_generasi):
+        populasi = generasi_baru(populasi)
+        # Cari kromosom terbaik di generasi ini
+        fitness = [hitung_fitness(kromosom) for kromosom in populasi]
+        terbaik = populasi[fitness.index(max(fitness))]
+        print(f"Generasi {generasi + 1}: x1 = {terbaik['x1']}, x2 = {terbaik['x2']}, Fitness = {max(fitness)}")
+        
+        if max(fitness) > fitness_terbaik:
+            generasi_terbaik = (generasi + 1, terbaik, max(fitness))
+            fitness_terbaik = max(fitness)
+    
+    # Tampilkan generasi terbaik
+    print(f"\nGenerasi Terbaik: {generasi_terbaik[0]} dengan kromosom x1 = {generasi_terbaik[1]['x1']}, x2 = {generasi_terbaik[1]['x2']}, Fitness = {generasi_terbaik[2]}")
+    
+    # Cari kromosom terbaik setelah selesai
+    fitness = [hitung_fitness(kromosom) for kromosom in populasi]
+    terbaik = populasi[fitness.index(max(fitness))]
+    return terbaik
+
+# Menjalankan GA
+hasil = ga_minimization()
+print("\nHasil Akhir:")
+print(f"x1 = {hasil['x1']}, x2 = {hasil['x2']}")
+print(f"Nilai Minimum: {fungsi_target(hasil['x1'], hasil['x2'])}")
