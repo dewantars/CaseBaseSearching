@@ -109,5 +109,5 @@ best_x1 = round(decode(best_kromosom[:10]), 3)
 best_x2 = round(decode(best_kromosom[10:]), 3)
 
 # Output hasil akhir
-print("\nBest Chromosome:", best_kromosom)
-print(f"Decoded values: x1 = {best_x1}, x2 = {best_x2}")
+print("\Kromosom Terbaik:", best_kromosom)
+print(f"Decode nilai: x1 = {best_x1}, x2 = {best_x2}")
