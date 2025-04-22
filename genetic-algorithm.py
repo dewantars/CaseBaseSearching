@@ -1,4 +1,5 @@
-import math
+import matematic.math as math
+
 # Decode binary to real values
 def decode(binary_str, a=-10, b=10, n=10):
     return a + (int(binary_str, 2) / (2**n - 1)) * (b - a)

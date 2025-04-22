@@ -1,67 +1,67 @@
-def abs(x):
-    # Mengembalikan Nilai absolut dari x
-    return x if x >= 0 else -x
-
 def factorial(n):
-    # Mengembalikan nilai faktorial dari n
     if n < 0:
         raise ValueError("Faktorial tidak didefinisikan untuk bilangan negatif")
     result = 1
-    for i in range(1, n + 1):
+    for i in range(2, n + 1):
         result *= i
     return result
 
 def power(base, exp):
-    # Mengembalikan nilai base pangkat exp
+    if exp == 0:
+        return 1
+    if exp < 0:
+        return 1 / power(base, -exp)
     result = 1
-    for _ in range(abs(exp)):
-        result *= base
-    return result if exp >= 0 else 1 / result
-
-def sin(x):
-    # Menghitung nilai sin dari x (x dalam radian) menggunakan deret Taylor
-    result = 0
-    for i in range(20):  # Iterasi untuk konvergensi yang cukup baik
-        term = power(-1, i) * power(x, 2 * i + 1) / factorial(2 * i + 1)
-        result += term
+    while exp > 0:
+        if exp % 2 == 1:
+            result *= base
+        base *= base
+        exp //= 2
     return result
 
-def cos(x):
-    # """Menghitung nilai cos dari x (x dalam radian) menggunakan deret Taylor"""
-    result = 0
-    for i in range(20):
-        term = power(-1, i) * power(x, 2 * i) / factorial(2 * i)
+def sin(x, epsilon=1e-12):
+    x = x % (2 * 3.141592653589793)  # normalisasi sudut ke [0, 2π]
+    result, term, i = 0, x, 1
+    while abs(term) > epsilon:
         result += term
+        term *= -x * x / ((2 * i) * (2 * i + 1))
+        i += 1
+    return result
+
+def cos(x, epsilon=1e-12):
+    x = x % (2 * 3.141592653589793)
+    result, term, i = 1, 1, 1
+    while abs(term) > epsilon:
+        term *= -x * x / ((2 * i - 1) * (2 * i))
+        result += term
+        i += 1
     return result
 
 def tan(x):
-    # """Menghitung nilai tan dari x (x dalam radian) sebagai sin/cos"""
-    cosine = cos(x)
-    if abs(cosine) < 1e-10:  # Menghindari pembagian dengan nol
+    c = cos(x)
+    if abs(c) < 1e-12:
         raise ValueError("tan tidak terdefinisi untuk nilai cos(x) mendekati nol")
-    return sin(x) / cosine
+    return sin(x) / c
 
-def exp(x):
-    # """Menghitung nilai e^x menggunakan deret Taylor"""
-    result = 0
-    for i in range(20):
-        term = power(x, i) / factorial(i)
+def exp(x, epsilon=1e-12):
+    result, term, i = 1, 1, 1
+    while abs(term) > epsilon:
+        term *= x / i
         result += term
+        i += 1
     return result
 
-def sqrt(x):
-    # """Menghitung akar kuadrat menggunakan metode bisection"""
+def sqrt(x, epsilon=1e-12):
     if x < 0:
         raise ValueError("Akar kuadrat tidak terdefinisi untuk bilangan negatif")
-    low, high = 0, x
-    if x < 1:
-        high = 1
-    guess = (low + high) / 2
-    while abs(guess * guess - x) > 1e-10:
-        if guess * guess < x:
-            low = guess
-        else:
-            high = guess
-        guess = (low + high) / 2
-    return guess
+    if x == 0:
+        return 0
+    guess = x
+    while True:
+        next_guess = 0.5 * (guess + x / guess)
+        if abs(guess - next_guess) < epsilon:
+            return next_guess
+        guess = next_guess
 
+def abs(x):
+    return x if x >= 0 else -x
