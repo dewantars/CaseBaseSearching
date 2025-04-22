@@ -1,12 +1,13 @@
-import matematic.math as math
-
+import math
 # Decode binary to real values
 def decode(binary_str, a=-10, b=10, n=10):
     return a + (int(binary_str, 2) / (2**n - 1)) * (b - a)
 
 # Objective function
 def fungsi_target(x1, x2):
-    return math.sin(x1) * math.cos(x2) - math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1**2))
+    return -(
+        (math.sin(x1) * math.cos(x2) * math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1**2)))
+    )
 
 # Calculate fitness
 def cariFitness(total, objektif):
@@ -37,7 +38,7 @@ def deterministic_mutate(kromosom, positions):
         kromosom[pos] = '1' if kromosom[pos] == '0' else '0'
     return ''.join(kromosom)
 
-# Evaluate a population
+# Evaluate the population
 def evaluate_population(population):
     data = []
     total_obj = 0
@@ -63,7 +64,7 @@ population = [
     "01110100011000110101",
     "11100111000101101010",
     "10111010101001011111",
-    "00000000001111111111",
+    "10000000001000000000",
 ]
 
 # Genetic Algorithm loop
@@ -76,12 +77,12 @@ for generation in range(20):
     data, total_obj = evaluate_population(population)
 
     # Display population table
-    print("No. Kromosom     x1        x2        F(x1, x2)  Fitness   Interval")
+    print("No. Kromosom     x1        x2        F(x1, x2)  Fitness   Cumulative   Interval")
     for i, item in enumerate(data, start=1):
-        print(f"{i:2}   {item['Kromosom']}   {item['x1']:.3f}   {item['x2']:.3f}   {item['Fungsi Objektif']:.3f}   {item['Fitness']:.3f}   {item['Interval']}")
+        print(f"{i:2}   {item['Kromosom']}   {item['x1']:.3f}   {item['x2']:.3f}   {item['Fungsi Objektif']:.3f}   {item['Fitness']:.3f}   {item['Cumulative']}   {item['Interval']}")
 
-    # Deterministic Selection
-    selected = deterministic_selection(data, [0.162, 0.238])  # Fixed thresholds
+    # Deterministic Selection (choose based on fixed thresholds)
+    selected = deterministic_selection(data, [0.162, 0.582])  # Fixed thresholds
 
     # Crossover (always occurs with a fixed point)
     crossover_point = 2
