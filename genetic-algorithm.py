@@ -1,94 +1,111 @@
-import random
-import math
+import matematic.math as math
 
-# Fungsi target
+# Decode binary to real values
+def decode(binary_str, a=-10, b=10, n=10):
+    return a + (int(binary_str, 2) / (2**n - 1)) * (b - a)
+
+# Objective function
 def fungsi_target(x1, x2):
-    return -(
-        math.sin(x1) * math.cos(x2) * math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1**2))
+    return math.sin(x1) * math.cos(x2) - math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1**2))
+
+# Calculate fitness
+def cariFitness(total, objektif):
+    return objektif / total
+
+# Deterministic roulette wheel selection
+def deterministic_selection(data, thresholds):
+    selected = []
+    for t in thresholds:
+        for item in data:
+            lower, upper = item["Interval"]
+            if lower <= t <= upper:
+                selected.append(item["Kromosom"])
+                break
+    return selected
+
+# Perform crossover deterministically
+def deterministic_crossover(parent1, parent2, point):
+    return (
+        parent1[:point] + parent2[point:],  # Child 1
+        parent2[:point] + parent1[point:],  # Child 2
     )
 
-# Parameter GA
-populasi_size = 20
-batas_x1 = [-10, 10]
-batas_x2 = [-10, 10]
-jumlah_generasi = 100
-mutasi_rate = 0.1
+# Perform mutation deterministically
+def deterministic_mutate(kromosom, positions):
+    kromosom = list(kromosom)
+    for pos in positions:
+        kromosom[pos] = '1' if kromosom[pos] == '0' else '0'
+    return ''.join(kromosom)
 
-def inisialisasi_populasi():
-    return [
-        {
-            "x1": random.uniform(batas_x1[0], batas_x1[1]),
-            "x2": random.uniform(batas_x2[0], batas_x2[1]),
-        }
-        for _ in range(populasi_size)
-    ]
-
-def hitung_fitness(kromosom):
-    x1, x2 = kromosom["x1"], kromosom["x2"]
-    return -fungsi_target(x1, x2)  # Maksimasi fitness -> minimasi fungsi target
-
-def seleksi_orangtua(populasi, fitness):
-    total_fitness = sum(fitness)
-    probabilitas = [f / total_fitness for f in fitness]
-    terpilih = random.choices(populasi, weights=probabilitas, k=2)
-    return terpilih
-
-def crossover(ortu1, ortu2):
-    alpha = random.random()
-    anak1 = {
-        "x1": alpha * ortu1["x1"] + (1 - alpha) * ortu2["x1"],
-        "x2": alpha * ortu1["x2"] + (1 - alpha) * ortu2["x2"],
-    }
-    anak2 = {
-        "x1": alpha * ortu2["x1"] + (1 - alpha) * ortu1["x1"],
-        "x2": alpha * ortu2["x2"] + (1 - alpha) * ortu1["x2"],
-    }
-    return anak1, anak2
-
-def mutasi(kromosom):
-    if random.random() < mutasi_rate:
-        kromosom["x1"] = random.uniform(batas_x1[0], batas_x1[1])
-    if random.random() < mutasi_rate:
-        kromosom["x2"] = random.uniform(batas_x2[0], batas_x2[1])
-    return kromosom
-
-def generasi_baru(populasi):
-    fitness = [hitung_fitness(kromosom) for kromosom in populasi]
-    populasi_baru = []
-    while len(populasi_baru) < populasi_size:
-        ortu1, ortu2 = seleksi_orangtua(populasi, fitness)
-        anak1, anak2 = crossover(ortu1, ortu2)
-        populasi_baru.append(mutasi(anak1))
-        if len(populasi_baru) < populasi_size:
-            populasi_baru.append(mutasi(anak2))
-    return populasi_baru
-
-def ga_minimization():
-    populasi = inisialisasi_populasi()
-    generasi_terbaik = None
-    fitness_terbaik = float('-inf')
-
-    for generasi in range(jumlah_generasi):
-        populasi = generasi_baru(populasi)
-        # Cari kromosom terbaik di generasi ini
-        fitness = [hitung_fitness(kromosom) for kromosom in populasi]
-        terbaik = populasi[fitness.index(max(fitness))]
-        print(f"Generasi {generasi + 1}: x1 = {terbaik['x1']}, x2 = {terbaik['x2']}, Fitness = {max(fitness)}")
-        
-        if max(fitness) > fitness_terbaik:
-            generasi_terbaik = (generasi + 1, terbaik, max(fitness))
-            fitness_terbaik = max(fitness)
+# Evaluate a population
+def evaluate_population(population):
+    data = []
+    total_obj = 0
+    for kromosom in population:
+        x1 = round(decode(kromosom[:10]), 3)
+        x2 = round(decode(kromosom[10:]), 3)
+        f_obj = round(fungsi_target(x1, x2), 3)
+        total_obj += f_obj
+        data.append({"Kromosom": kromosom, "x1": x1, "x2": x2, "Fungsi Objektif": f_obj})
     
-    # Tampilkan generasi terbaik
-    print(f"\nGenerasi Terbaik: {generasi_terbaik[0]} dengan kromosom x1 = {generasi_terbaik[1]['x1']}, x2 = {generasi_terbaik[1]['x2']}, Fitness = {generasi_terbaik[2]}")
+    cumulative = 0
+    for item in data:
+        fitness = round(cariFitness(total_obj, item["Fungsi Objektif"]), 3)
+        cumulative += fitness
+        item["Fitness"] = fitness
+        item["Cumulative"] = round(cumulative, 3)
+        item["Interval"] = (round(cumulative - fitness, 3), round(cumulative, 3))
     
-    # Cari kromosom terbaik setelah selesai
-    fitness = [hitung_fitness(kromosom) for kromosom in populasi]
-    terbaik = populasi[fitness.index(max(fitness))]
-    return terbaik
+    return data, total_obj
 
-# Menjalankan GA
-hasil = ga_minimization()
-print("\nHasil Akhir:")
-print(f"x1 = {hasil['x1']}, x2 = {hasil['x2']}")
-print(f"Nilai Minimum: {fungsi_target(hasil['x1'], hasil['x2'])}")
+# Initialize population from table
+population = [
+    "01110100011000110101",
+    "11100111000101101010",
+    "10111010101001011111",
+    "00000000001111111111",
+]
+
+# Genetic Algorithm loop
+best_kromosom = None
+best_fitness = -float("inf")
+for generation in range(20):
+    print(f"Generation {generation + 1}")
+
+    # Evaluate current population
+    data, total_obj = evaluate_population(population)
+
+    # Display population table
+    print("No. Kromosom     x1        x2        F(x1, x2)  Fitness   Interval")
+    for i, item in enumerate(data, start=1):
+        print(f"{i:2}   {item['Kromosom']}   {item['x1']:.3f}   {item['x2']:.3f}   {item['Fungsi Objektif']:.3f}   {item['Fitness']:.3f}   {item['Interval']}")
+
+    # Deterministic Selection
+    selected = deterministic_selection(data, [0.162, 0.238])  # Fixed thresholds
+
+    # Crossover (always occurs with a fixed point)
+    crossover_point = 2
+    child1, child2 = deterministic_crossover(selected[0], selected[1], crossover_point)
+
+    # Mutation (fixed positions)
+    mutation_positions_1 = [4, 9]  # For child 1
+    mutation_positions_2 = [4, 10]  # For child 2
+    child1 = deterministic_mutate(child1, mutation_positions_1)
+    child2 = deterministic_mutate(child2, mutation_positions_2)
+
+    # Update population
+    population = [child1, child2]
+
+    # Check for the best solution
+    for item in evaluate_population(population)[0]:
+        if item["Fitness"] > best_fitness:
+            best_kromosom = item["Kromosom"]
+            best_fitness = item["Fitness"]
+
+# Decode the best chromosome
+best_x1 = round(decode(best_kromosom[:10]), 3)
+best_x2 = round(decode(best_kromosom[10:]), 3)
+
+# Output results
+print("\nBest Chromosome:", best_kromosom)
+print(f"Decoded values: x1 = {best_x1}, x2 = {best_x2}")
