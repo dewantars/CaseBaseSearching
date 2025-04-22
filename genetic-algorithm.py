@@ -1,20 +1,20 @@
-import matematic.math as math
+import matematic.math as math # Mengimpor modul matematic.math sebagai math
 
-# Decode binary to real values
+# Fungsi untuk mendekode nilai biner ke nilai real
 def decode(binary_str, a=-10, b=10, n=10):
     return a + (int(binary_str, 2) / (2**n - 1)) * (b - a)
 
-# Objective function
+# Fungsi objektif untuk mengevaluasi kualitas kromosom
 def fungsi_target(x1, x2):
     return -(
         (math.sin(x1) * math.cos(x2) * math.tan(x1 + x2) + (3 / 4) * math.exp(1 - math.sqrt(x1**2)))
     )
 
-# Calculate fitness
+# Fungsi untuk menghitung nilai fitness
 def cariFitness(total, objektif):
     return objektif / total
 
-# Deterministic roulette wheel selection
+# Seleksi deterministik menggunakan roulette wheel dengan ambang tertentu
 def deterministic_selection(data, thresholds):
     selected = []
     for t in thresholds:
@@ -25,21 +25,21 @@ def deterministic_selection(data, thresholds):
                 break
     return selected
 
-# Perform crossover deterministically
+# Fungsi untuk melakukan crossover deterministik pada dua parent
 def deterministic_crossover(parent1, parent2, point):
     return (
         parent1[:point] + parent2[point:],  # Child 1
         parent2[:point] + parent1[point:],  # Child 2
     )
 
-# Perform mutation deterministically
+# Fungsi untuk melakukan mutasi deterministik pada kromosom
 def deterministic_mutate(kromosom, positions):
     kromosom = list(kromosom)
     for pos in positions:
         kromosom[pos] = '1' if kromosom[pos] == '0' else '0'
     return ''.join(kromosom)
 
-# Evaluate the population
+# Fungsi untuk mengevaluasi seluruh populasi
 def evaluate_population(population):
     data = []
     total_obj = 0
@@ -60,7 +60,7 @@ def evaluate_population(population):
     
     return data, total_obj
 
-# Initialize population from table
+# Inisialisasi populasi 
 population = [
     "01110100011000110101",
     "11100111000101101010",
@@ -68,46 +68,46 @@ population = [
     "10000000001000000000",
 ]
 
-# Genetic Algorithm loop
+# Loop algoritma genetika
 best_kromosom = None
 best_fitness = -float("inf")
 for generation in range(20):
     print(f"Generation {generation + 1}")
 
-    # Evaluate current population
+    # Evaluasi populasi saat ini
     data, total_obj = evaluate_population(population)
 
-    # Display population table
+    # Menampilkan tabel evaluasi populasi
     print("No. Kromosom     x1        x2        F(x1, x2)  Fitness   Cumulative   Interval")
     for i, item in enumerate(data, start=1):
         print(f"{i:2}   {item['Kromosom']}   {item['x1']:.3f}   {item['x2']:.3f}   {item['Fungsi Objektif']:.3f}   {item['Fitness']:.3f}   {item['Cumulative']}   {item['Interval']}")
 
-    # Deterministic Selection (choose based on fixed thresholds)
+    # Seleksi deterministik menggunakan threshold tetap
     selected = deterministic_selection(data, [0.162, 0.582])  # Fixed thresholds
 
-    # Crossover (always occurs with a fixed point)
+    # Crossover deterministik pada kromosom yang terpilih
     crossover_point = 2
     child1, child2 = deterministic_crossover(selected[0], selected[1], crossover_point)
 
-    # Mutation (fixed positions)
-    mutation_positions_1 = [4, 9]  # For child 1
-    mutation_positions_2 = [4, 10]  # For child 2
+    # Mutasi deterministik pada anak yang dihasilkan (posisi tetap)
+    mutation_positions_1 = [4, 9]  # child 1
+    mutation_positions_2 = [4, 10]  # child 2
     child1 = deterministic_mutate(child1, mutation_positions_1)
     child2 = deterministic_mutate(child2, mutation_positions_2)
 
-    # Update population
+    # Perbarui populasi dengan anak yang baru
     population = [child1, child2]
 
-    # Check for the best solution
+    # Memeriksa solusi terbaik
     for item in evaluate_population(population)[0]:
         if item["Fitness"] > best_fitness:
             best_kromosom = item["Kromosom"]
             best_fitness = item["Fitness"]
 
-# Decode the best chromosome
+# Dekode kromosom terbaik
 best_x1 = round(decode(best_kromosom[:10]), 3)
 best_x2 = round(decode(best_kromosom[10:]), 3)
 
-# Output results
+# Output hasil akhir
 print("\nBest Chromosome:", best_kromosom)
 print(f"Decoded values: x1 = {best_x1}, x2 = {best_x2}")
