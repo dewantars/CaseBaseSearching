@@ -78,12 +78,12 @@ for generation in range(20):
     data, total_obj = evaluate_population(population)
 
     # Menampilkan tabel evaluasi populasi
-    print("No. Kromosom     x1        x2        F(x1, x2)  Fitness   Cumulative   Interval")
+    print("No.\t Kromosom \t \t x1 \t  x2 \t \t F(x1, x2) \t Fitness \t Cumulative \t Interval")
     for i, item in enumerate(data, start=1):
-        print(f"{i:2}   {item['Kromosom']}   {item['x1']:.3f}   {item['x2']:.3f}   {item['Fungsi Objektif']:.3f}   {item['Fitness']:.3f}   {item['Cumulative']}   {item['Interval']}")
+        print(f"{i:2} \t {item['Kromosom']} \t {item['x1']:.3f} \t  {item['x2']:.3f} \t {item['Fungsi Objektif']:.3f} \t {item['Fitness']:.3f} \t \t {item['Cumulative']} \t \t {item['Interval']}")
 
     # Seleksi deterministik menggunakan threshold tetap
-    selected = deterministic_selection(data, [0.162, 0.582])  # Fixed thresholds
+    selected = deterministic_selection(data, [0.162, 0.582]) 
 
     # Crossover deterministik pada kromosom yang terpilih
     crossover_point = 2
@@ -109,5 +109,6 @@ best_x1 = round(decode(best_kromosom[:10]), 3)
 best_x2 = round(decode(best_kromosom[10:]), 3)
 
 # Output hasil akhir
-print("\Kromosom Terbaik:", best_kromosom)
+print("\nKromosom Terbaik:", best_kromosom)
+print(f"Nilai Fitness: {best_fitness}")
 print(f"Decode nilai: x1 = {best_x1}, x2 = {best_x2}")
