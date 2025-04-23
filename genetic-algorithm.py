@@ -71,16 +71,24 @@ population = [
 # Loop algoritma genetika
 best_kromosom = None
 best_fitness = -float("inf")
+best_generation = -1
 for generation in range(20):
+    print()
     print(f"Generation {generation + 1}")
 
     # Evaluasi populasi saat ini
     data, total_obj = evaluate_population(population)
 
     # Menampilkan tabel evaluasi populasi
-    print("No.\t Kromosom \t \t x1 \t  x2 \t \t F(x1, x2) \t Fitness \t Cumulative \t Interval")
+    print("{:<4}{:<22}{:>10}{:>10}{:>15}{:>10}{:>15}{:>20}".format(
+        "No.", "Kromosom", "x1", "x2", "F(x1,x2)", "Fitness", "Cumulative", "Interval"
+    ))
     for i, item in enumerate(data, start=1):
-        print(f"{i:2} \t {item['Kromosom']} \t {item['x1']:.3f} \t  {item['x2']:.3f} \t {item['Fungsi Objektif']:.3f} \t {item['Fitness']:.3f} \t \t {item['Cumulative']} \t \t {item['Interval']}")
+        print("{:<4}{:<22}{:>10.3f}{:>10.3f}{:>15.3f}{:>10.3f}{:>15.3f}{:>20}".format(
+        i, item['Kromosom'], item['x1'], item['x2'],
+        item['Fungsi Objektif'], item['Fitness'],
+        item['Cumulative'], str(item['Interval'])
+    ))
 
     # Seleksi deterministik menggunakan threshold tetap
     selected = deterministic_selection(data, [0.162, 0.582]) 
@@ -103,6 +111,7 @@ for generation in range(20):
         if item["Fitness"] > best_fitness:
             best_kromosom = item["Kromosom"]
             best_fitness = item["Fitness"]
+            best_generation = generation + 1
 
 # Dekode kromosom terbaik
 best_x1 = round(decode(best_kromosom[:10]), 3)
@@ -112,3 +121,4 @@ best_x2 = round(decode(best_kromosom[10:]), 3)
 print("\nKromosom Terbaik:", best_kromosom)
 print(f"Nilai Fitness: {best_fitness}")
 print(f"Decode nilai: x1 = {best_x1}, x2 = {best_x2}")
+print(f"Ditemukan pada Generasi ke-{best_generation}")
